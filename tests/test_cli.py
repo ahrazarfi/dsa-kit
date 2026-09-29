@@ -108,6 +108,26 @@ class VSCodeConfigTests(unittest.TestCase):
         self.assertEqual(task[vscode._os_key()]['command'], '/b/dsa')
         self.assertEqual(task['args'], ['run', '${file}'])
 
+    def test_extra_path_preserves_existing_settings_text(self):
+        d = tempfile.mkdtemp()
+        original = '{\n    // keep me\n    "editor.fontSize": 14\n}\n'
+        with open(os.path.join(d, 'settings.json'), 'w') as f:
+            f.write(original)
+        self.assertEqual(vscode.ensure_extra_path(d, '/x/site-packages'), 'added')
+        self.assertEqual(vscode.ensure_extra_path(d, '/x/site-packages'), 'ok')
+        with open(os.path.join(d, 'settings.json')) as f:
+            text = f.read()
+        self.assertIn('// keep me', text)
+        data = vscode.load_jsonc(os.path.join(d, 'settings.json'), {})
+        self.assertEqual(data['python.analysis.extraPaths'], ['/x/site-packages'])
+        self.assertEqual(data['editor.fontSize'], 14)
+
+    def test_extra_path_appends_to_existing_list_and_handles_missing_file(self):
+        d = tempfile.mkdtemp()
+        self.assertEqual(vscode.ensure_extra_path(d, '/a'), 'added')
+        self.assertEqual(vscode.ensure_extra_path(d, '/b'), 'added')
+        self.assertEqual(vscode.load_jsonc(os.path.join(d, 'settings.json'), {})['python.analysis.extraPaths'], ['/a', '/b'])
+
     def test_bundled_vsix_is_valid(self):
         with zipfile.ZipFile(vscode.VSIX) as z:
             self.assertIn('extension/extension.js', z.namelist())

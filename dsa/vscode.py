@@ -111,6 +111,41 @@ def ensure_keybinding(folder):
     return 'added'
 
 
+EXTRA_PATHS_KEY = 'python.analysis.extraPaths'
+
+
+def package_path():
+    """Folder that contains the installed `dsa` package (the tool's site-packages)."""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def ensure_extra_path(folder, path=None):
+    """Let Pylance resolve `from dsa import run` by adding the package folder to
+    python.analysis.extraPaths in the user settings. Returns 'added' or 'ok'."""
+    path = path or package_path()
+    file = os.path.join(folder, 'settings.json')
+    data = load_jsonc(file, {})
+    current = data.get(EXTRA_PATHS_KEY)
+    if current and path in current:
+        return 'ok'
+    if current is None and os.path.exists(file):
+        # key absent: insert one line and leave the rest of the user's file (comments included) untouched
+        with open(file, encoding='utf-8-sig') as f:
+            text = f.read()
+        head = text.index('{')
+        rest = text[head + 1:]
+        line = '\n    "%s": %s,' % (EXTRA_PATHS_KEY, json.dumps([path]))
+        if rest.lstrip().startswith('}'):
+            line = line.rstrip(',')
+        shutil.copyfile(file, file + '.bak')
+        with open(file, 'w', encoding='utf-8') as f:
+            f.write(text[:head + 1] + line + rest)
+        return 'added'
+    data[EXTRA_PATHS_KEY] = (current or []) + [path]
+    save_json(file, data)
+    return 'added'
+
+
 def _extension_dirs():
     return [d for d in (os.path.expanduser('~/.vscode-server/extensions'), os.path.expanduser('~/.vscode/extensions'))
             if os.path.isdir(d)]

@@ -41,6 +41,7 @@ Check everything: `dsa doctor`.
 ### What `dsa setup` changes
 
 - Installs the bundled **DSA Layout** extension (`local.dsa-layout`).
+- Adds `python.analysis.extraPaths` to your user `settings.json` (one inserted line, the rest of the file untouched) so the editor resolves `from dsa import run`.
 - Adds a `run-current-python` task to your **user** `tasks.json` and a `ctrl+'` entry to
   your **user** `keybindings.json`. Existing entries are kept, an existing binding to the task
   is left as is, and the original file is saved as `*.bak` (comments in it aren't preserved).

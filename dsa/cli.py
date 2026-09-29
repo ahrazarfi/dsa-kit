@@ -87,7 +87,8 @@ def setup(yes=False, folder=None):
     print(vscode.install_extension() or 'no VS Code extensions folder found; run in a VS Code terminal or install '
           'manually from %s' % vscode.VSIX)
 
-    for label, fn, arg in (('run task', vscode.ensure_task, dsa_exe), ("Ctrl+' shortcut", vscode.ensure_keybinding, None)):
+    for label, fn, arg in (('run task', vscode.ensure_task, dsa_exe), ("Ctrl+' shortcut", vscode.ensure_keybinding, None),
+                           ('editor import path', vscode.ensure_extra_path, None)):
         if _confirm('Add the %s to %s?' % (label, folder), yes):
             try:
                 print('%s: %s' % (label, fn(folder, arg) if arg else fn(folder)))
@@ -116,6 +117,8 @@ def doctor():
         check('run task in %s' % folder, any(t.get('label') == vscode.TASK_LABEL for t in tasks), 'run `dsa setup`')
         keys = vscode.load_jsonc(os.path.join(folder, 'keybindings.json'), [])
         check("Ctrl+' shortcut", any(k.get('args') == vscode.TASK_LABEL for k in keys), 'run `dsa setup`')
+        paths = vscode.load_jsonc(os.path.join(folder, 'settings.json'), {}).get(vscode.EXTRA_PATHS_KEY) or []
+        check('editor resolves `from dsa import run`', vscode.package_path() in paths, 'run `dsa setup`')
     except ValueError as e:
         check('user config readable', False, str(e))
     return 0 if ok else 1
