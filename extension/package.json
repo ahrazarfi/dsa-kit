@@ -1,0 +1,12 @@
+{
+  "name": "dsa-layout",
+  "displayName": "DSA Layout",
+  "description": "Lays out solution.py | input.txt / output.txt when `new` scaffolds a problem.",
+  "publisher": "local",
+  "version": "2.0.0",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/ahrazarfi/dsa-kit" },
+  "engines": { "vscode": "^1.60.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"]
+}
