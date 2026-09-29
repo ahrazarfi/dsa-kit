@@ -122,6 +122,23 @@ class VSCodeConfigTests(unittest.TestCase):
         self.assertEqual(data['python.analysis.extraPaths'], ['/x/site-packages'])
         self.assertEqual(data['editor.fontSize'], 14)
 
+    def test_windows_line_endings_are_kept(self):
+        d = tempfile.mkdtemp()
+        file = os.path.join(d, 'settings.json')
+        with open(file, 'wb') as f:
+            f.write(b'{\r\n    "a": 1\r\n}\r\n')
+        vscode.ensure_extra_path(d, '/p')
+        with open(file, 'rb') as f:
+            raw = f.read()
+        self.assertEqual(raw.count(b'\n'), raw.count(b'\r\n'))
+        kb = os.path.join(d, 'keybindings.json')
+        with open(kb, 'wb') as f:
+            f.write(b'[\r\n]\r\n')
+        vscode.ensure_keybinding(d)
+        with open(kb, 'rb') as f:
+            raw = f.read()
+        self.assertEqual(raw.count(b'\n'), raw.count(b'\r\n'))
+
     def test_extra_path_appends_to_existing_list_and_handles_missing_file(self):
         d = tempfile.mkdtemp()
         self.assertEqual(vscode.ensure_extra_path(d, '/a'), 'added')

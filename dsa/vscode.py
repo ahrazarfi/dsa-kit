@@ -64,13 +64,22 @@ def load_jsonc(path, default):
     return json.loads(text)
 
 
+def _newline(path):
+    """The line ending an existing file uses ('\r\n' for files edited on Windows), else '\n'."""
+    if os.path.exists(path):
+        with open(path, 'rb') as f:
+            if b'\r\n' in f.read(4096):
+                return '\r\n'
+    return '\n'
+
+
 def save_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    newline = _newline(path)
     if os.path.exists(path):
         shutil.copyfile(path, path + '.bak')  # comments in the original are not preserved
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4)
-        f.write('\n')
+    with open(path, 'w', encoding='utf-8', newline='') as f:
+        f.write(json.dumps(data, indent=4).replace('\n', newline) + newline)
 
 
 def ensure_task(folder, dsa_exe):
@@ -130,15 +139,16 @@ def ensure_extra_path(folder, path=None):
         return 'ok'
     if current is None and os.path.exists(file):
         # key absent: insert one line and leave the rest of the user's file (comments included) untouched
-        with open(file, encoding='utf-8-sig') as f:
+        newline = _newline(file)
+        with open(file, encoding='utf-8-sig', newline='') as f:
             text = f.read()
         head = text.index('{')
         rest = text[head + 1:]
-        line = '\n    "%s": %s,' % (EXTRA_PATHS_KEY, json.dumps([path]))
+        line = '%s    "%s": %s,' % (newline, EXTRA_PATHS_KEY, json.dumps([path]))
         if rest.lstrip().startswith('}'):
             line = line.rstrip(',')
         shutil.copyfile(file, file + '.bak')
-        with open(file, 'w', encoding='utf-8') as f:
+        with open(file, 'w', encoding='utf-8', newline='') as f:
             f.write(text[:head + 1] + line + rest)
         return 'added'
     data[EXTRA_PATHS_KEY] = (current or []) + [path]
