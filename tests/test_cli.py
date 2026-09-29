@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import subprocess
@@ -5,6 +7,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from unittest import mock
 
 from dsa import cli, vscode
 
@@ -73,7 +76,35 @@ class RunAndCheckTests(unittest.TestCase):
         self.assertIn('2 checked, 1 passed, 1 failed', r.stdout)
 
 
+class DemoAndHintTests(unittest.TestCase):
+    def test_demo_creates_and_passes(self):
+        base = tempfile.mkdtemp()
+        with mock.patch.object(cli, 'open_in_vscode'):  # never touch the real editor or ~/.dsa from a test
+            cli.demo(base)
+        folder = os.path.join(base, 'demo-two-sum')
+        with open(os.path.join(folder, 'output.txt')) as f:
+            self.assertEqual(f.read().strip(), '0 1')
+        with mock.patch.object(cli, 'open_in_vscode'), self.assertRaises(SystemExit):
+            cli.demo(base)  # refuses to overwrite
+
+    def test_hint_shown_once(self):
+        d = tempfile.mkdtemp()
+        buf = io.StringIO()
+        with mock.patch.object(cli, 'HINT_MARKER', os.path.join(d, 'seen-hint')), contextlib.redirect_stdout(buf):
+            cli._show_hint_once()
+            cli._show_hint_once()
+        self.assertEqual(buf.getvalue().count('How it works'), 1)
+
+
 class VSCodeConfigTests(unittest.TestCase):
+    def test_keybinding_conflict_is_reported_not_overwritten(self):
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, 'keybindings.json'), 'w') as f:
+            f.write('[{"key": "ctrl+\'", "command": "something.else"}]')
+        self.assertEqual(vscode.ensure_keybinding(d), 'conflict')
+        with open(os.path.join(d, 'keybindings.json')) as f:
+            self.assertEqual(len(json.load(f)), 1)
+
     def test_jsonc_comments_and_trailing_commas(self):
         d = tempfile.mkdtemp()
         p = os.path.join(d, 'k.json')

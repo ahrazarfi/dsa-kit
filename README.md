@@ -20,18 +20,30 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/ahrazarfi/dsa-kit/main/install.ps1 | iex
 ```
 
-This installs [uv](https://docs.astral.sh/uv/) if it's missing, installs the tool with
-`uv tool install`, and runs `dsa setup --yes`. Then open a new terminal so PATH refreshes,
-and reload VS Code. There is no per-project virtualenv and nothing is copied into your
-problems folder.
+**You need:** `git` and [VS Code](https://code.visualstudio.com) (with its `code` command on PATH;
+on Windows tick "Add to PATH" in the VS Code installer, on macOS run "Shell Command: Install 'code'
+command in PATH" from the command palette). The installer checks for both and tells you what's missing.
+
+The installer installs [uv](https://docs.astral.sh/uv/) if it's missing, installs the tool with
+`uv tool install`, and then configures VS Code. It **asks before** editing your VS Code settings and
+backs up each file it changes. To skip the questions (scripts, CI), run
+`curl -LsSf .../install.sh | sh -s -- --yes` or set `DSA_YES=1` (`$env:DSA_YES='1'` on Windows).
+
+**Then, three steps:** open a **new terminal** (so `new` and `dsa` are on PATH), **reload VS Code**
+(Ctrl+Shift+P, "Developer: Reload Window"), and run `dsa demo` in an empty folder to see a finished example.
+There is no per-project virtualenv and nothing is copied into your problems folder.
+
+**WSL users:** run the Linux installer *inside WSL* and skip the Windows one. It installs into WSL and
+edits the same Windows-side VS Code config.
 
 Update: `uv tool upgrade dsa-kit`. Remove: `uv tool uninstall dsa-kit`.
-Check everything: `dsa doctor`.
+Check everything: `dsa doctor`. The first time you run `new`, it prints a short reminder of the input format.
 
 ## What you get
 
 | Command | Does |
 |---|---|
+| `dsa demo` | Creates `demo-two-sum/` in the current folder with a finished example, runs it once, and opens it. |
 | `new <name>` | Creates `<name>/` in the **current directory** with `solution.py`, `input.txt`, `expected.txt`, `output.txt` and opens the panes in VS Code. Reopens it if it exists. |
 | `dsa run <file>` | Runs a solution (this is what Ctrl+' triggers). Failures print and exit non-zero, which pops the terminal open. |
 | `dsa check [dir]` | Runs every problem under `dir` that has an `expected.txt` and prints a PASS/FAIL table. |

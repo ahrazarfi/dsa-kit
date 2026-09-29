@@ -110,11 +110,13 @@ def ensure_task(folder, dsa_exe):
 
 
 def ensure_keybinding(folder):
-    """Bind Ctrl+' to the task unless something already runs it. Returns 'added' or 'ok'."""
+    """Bind Ctrl+' to the task unless something already runs it. Returns 'added', 'ok' or 'conflict'."""
     path = os.path.join(folder, 'keybindings.json')
     data = load_jsonc(path, [])
     if any(k.get('command') == KEYBINDING['command'] and k.get('args') == TASK_LABEL for k in data):
         return 'ok'
+    if any(k.get('key') in ("ctrl+'", 'ctrl+oem_7') and not str(k.get('command', '')).startswith('-') for k in data):
+        return 'conflict'  # the user already bound that key to something else
     data.append(dict(KEYBINDING))
     save_json(path, data)
     return 'added'
