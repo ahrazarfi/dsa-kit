@@ -184,3 +184,20 @@ class VSCodeConfigTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PackagingTests(unittest.TestCase):
+    def test_every_data_file_is_declared_as_package_data(self):
+        """Files under dsa/data/ only ship if pyproject's package-data globs match them (source-tree runs hide this)."""
+        import fnmatch
+        import re
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, 'pyproject.toml')) as f:
+            globs = re.search(r'^dsa = \[(.*)\]', f.read(), re.M).group(1)
+        globs = re.findall(r'"([^"]+)"', globs)
+        data = os.path.join(root, 'dsa', 'data')
+        for folder, _dirs, files in os.walk(data):
+            for name in files:
+                rel = os.path.relpath(os.path.join(folder, name), os.path.join(root, 'dsa')).replace(os.sep, '/')
+                self.assertTrue(any(fnmatch.fnmatch(rel, g) and rel.count('/') == g.count('/') for g in globs),
+                                '%s is not covered by package-data %s' % (rel, globs))

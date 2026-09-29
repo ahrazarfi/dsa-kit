@@ -18,4 +18,4 @@ dsa = "dsa.cli:main"
 include = ["dsa*"]
 
 [tool.setuptools.package-data]
-dsa = ["data/*"]
+dsa = ["data/*", "data/demo/*"]
